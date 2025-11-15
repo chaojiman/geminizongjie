@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>提示词配置 - Gemini助手</title>
+  <link rel="stylesheet" href="config.css">
+</head>
+<body>
+  <div class="config-container">
+    <div class="header">
+      <h1>⚙️ 提示词配置管理</h1>
+      <p class="subtitle">管理您的分析提示词模板（最少1个，最多5个）</p>
+    </div>
+
+    <!-- 配置列表 -->
+    <div class="config-list" id="configList">
+      <!-- 配置项会动态生成 -->
+    </div>
+
+    <!-- 添加配置按钮 -->
+    <div class="add-config-section">
+      <button id="addConfigBtn" class="add-btn">
+        <span>➕</span>
+        <span>添加新配置</span>
+      </button>
+    </div>
+
+    <!-- 固定内容说明 -->
+    <div class="info-box">
+      <h3>📌 固定内容说明</h3>
+      <p>以下内容会自动添加到每个配置中，<strong>无法修改</strong>：</p>
+      <ul>
+        <li>📄 <strong>网页基本信息</strong>：标题、网址、提取时间</li>
+        <li>📋 <strong>网页完整内容</strong>：提取的正文、标题、段落</li>
+        <li>🖼️ <strong>页面图片列表</strong>：图片URL和描述（如有）</li>
+      </ul>
+      <p class="note">💡 您的自定义提示词会添加在这些固定内容之后</p>
+    </div>
+
+    <!-- 操作按钮 -->
+    <div class="actions">
+      <button id="saveBtn" class="primary-btn">💾 保存配置</button>
+      <button id="resetBtn" class="secondary-btn">🔄 恢复默认</button>
+      <button id="closeBtn" class="secondary-btn">❌ 关闭</button>
+    </div>
+
+    <!-- 状态提示 -->
+    <div class="status" id="status"></div>
+  </div>
+
+  <script src="config.js"></script>
+</body>
+</html>

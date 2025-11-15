@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini总结助手</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>📝 Gemini总结助手</h1>
+    </div>
+
+    <div class="main-action">
+      <button id="summarizeBtn" class="primary-btn">
+        <span class="btn-icon">🚀</span>
+        <span class="btn-text">发送到Gemini总结</span>
+      </button>
+    </div>
+
+    <div class="settings">
+      <h3>⚙️ 设置选项</h3>
+
+      <div class="setting-item">
+        <label for="promptConfig">提示词配置：</label>
+        <div class="config-selector">
+          <select id="promptConfig" class="config-select">
+            <!-- 配置选项会动态加载 -->
+          </select>
+          <button id="manageConfigBtn" class="small-btn">⚙️ 管理配置</button>
+        </div>
+        <p class="setting-desc">选择用于分析的提示词模板</p>
+      </div>
+
+      <div class="setting-item">
+        <label class="checkbox-label">
+          <input type="checkbox" id="openInBackground">
+          <span class="checkbox-text">后台打开Gemini（留在当前页面）</span>
+        </label>
+        <p class="setting-desc">勾选后Gemini在右侧窗口打开，焦点留在当前页面；取消勾选则跳转到Gemini窗口</p>
+      </div>
+
+      <div class="setting-item">
+        <label for="customShortcut">快捷键设置：</label>
+        <div class="shortcut-info">
+          <code id="currentShortcut">Ctrl+Shift+G</code>
+          <button id="changeShortcut" class="small-btn">修改快捷键</button>
+        </div>
+        <p class="setting-desc">点击修改快捷键按钮，然后前往 <code>chrome://extensions/shortcuts</code> 进行设置</p>
+      </div>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <div class="footer">
+      <p>使用Gemini 2.5 Pro模型进行智能分析</p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

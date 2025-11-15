@@ -1,0 +1,347 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  padding: 20px;
+  color: #333;
+}
+
+.config-container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  padding: 30px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.header h1 {
+  font-size: 28px;
+  color: #667eea;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  color: #666;
+  font-size: 14px;
+}
+
+/* 配置列表 */
+.config-list {
+  margin-bottom: 20px;
+}
+
+.config-item {
+  background: #f8f9fa;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  padding: 20px;
+  margin-bottom: 15px;
+  transition: all 0.3s ease;
+}
+
+.config-item.active {
+  border-color: #667eea;
+  background: #f0f4ff;
+}
+
+.config-item:hover {
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.config-title-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.config-title-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.config-title-input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.active-badge {
+  background: #667eea;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.config-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.icon-btn:hover {
+  transform: scale(1.1);
+}
+
+.set-active-btn {
+  background: #667eea;
+  color: white;
+}
+
+.set-active-btn:hover {
+  background: #5568d3;
+}
+
+.delete-btn {
+  background: #dc3545;
+  color: white;
+}
+
+.delete-btn:hover {
+  background: #c82333;
+}
+
+.config-body {
+  margin-top: 15px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #555;
+  font-size: 14px;
+}
+
+.form-textarea {
+  width: 100%;
+  min-height: 200px;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.char-count {
+  text-align: right;
+  font-size: 12px;
+  color: #999;
+  margin-top: 5px;
+}
+
+/* 添加配置区域 */
+.add-config-section {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.add-btn {
+  padding: 12px 24px;
+  border: 2px dashed #667eea;
+  border-radius: 8px;
+  background: transparent;
+  color: #667eea;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.add-btn:hover {
+  background: #667eea;
+  color: white;
+  border-style: solid;
+}
+
+.add-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 信息框 */
+.info-box {
+  background: #e7f3ff;
+  border-left: 4px solid #2196F3;
+  padding: 20px;
+  border-radius: 6px;
+  margin-bottom: 30px;
+}
+
+.info-box h3 {
+  color: #2196F3;
+  margin-bottom: 12px;
+  font-size: 16px;
+}
+
+.info-box p {
+  color: #555;
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+
+.info-box ul {
+  margin-left: 20px;
+  margin-bottom: 10px;
+}
+
+.info-box li {
+  color: #555;
+  line-height: 1.8;
+}
+
+.note {
+  background: #fff3cd;
+  padding: 10px;
+  border-radius: 4px;
+  margin-top: 10px;
+  border-left: 3px solid #ffc107;
+}
+
+/* 操作按钮 */
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.primary-btn,
+.secondary-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.primary-btn {
+  background: #667eea;
+  color: white;
+}
+
+.primary-btn:hover {
+  background: #5568d3;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.secondary-btn {
+  background: #6c757d;
+  color: white;
+}
+
+.secondary-btn:hover {
+  background: #5a6268;
+}
+
+/* 状态提示 */
+.status {
+  text-align: center;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-top: 15px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.status.show {
+  opacity: 1;
+}
+
+.status.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.status.info {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .config-container {
+    padding: 20px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  .config-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .primary-btn,
+  .secondary-btn {
+    width: 100%;
+  }
+}
