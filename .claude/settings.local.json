@@ -2,7 +2,15 @@
   "permissions": {
     "allow": [
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(claude mcp add:*)",
+      "WebSearch",
+      "WebFetch(domain:www.youtube.com)",
+      "mcp__rube__RUBE_MANAGE_CONNECTIONS",
+      "mcp__rube__RUBE_MULTI_EXECUTE_TOOL",
+      "Bash($PROFILE)",
+      "Bash(Test-Path:*)",
+      "Bash(pwsh -Command \"$PROFILE\")"
     ],
     "deny": [],
     "ask": []
