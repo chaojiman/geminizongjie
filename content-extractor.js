@@ -6,7 +6,9 @@ function extractPageContent() {
     url: window.location.href,
     content: [],
     images: [],
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    isImageHeavy: false,
+    needsScreenshot: false
   };
 
   // 使用智能算法找到主要内容区域
@@ -20,7 +22,55 @@ function extractPageContent() {
   // 提取内容
   extractContent(mainContent, result);
 
+  // 检测是否为图片密集型页面
+  result.isImageHeavy = detectImageHeavyPage(result, mainContent);
+  result.needsScreenshot = result.isImageHeavy;
+
+  if (result.needsScreenshot) {
+    console.log('🖼️ 检测到图片密集型页面，需要截图');
+  }
+
   return result;
+}
+
+// 检测是否为图片密集型页面
+function detectImageHeavyPage(result, mainContent) {
+  // 策略1: 检查图片数量与文本长度的比例
+  const imageCount = result.images.length;
+  const textLength = result.content.reduce((sum, item) => {
+    return sum + (item.content ? item.content.length : 0);
+  }, 0);
+
+  // 策略2: 检查特定域名（如微信公众号）
+  const isWeChatArticle = window.location.href.includes('mp.weixin.qq.com');
+
+  // 策略3: 检查图片占页面的比例
+  const mainContentHeight = mainContent.offsetHeight || mainContent.scrollHeight;
+  const images = mainContent.querySelectorAll('img');
+  let totalImageHeight = 0;
+  images.forEach(img => {
+    if (img.offsetHeight > 0) {
+      totalImageHeight += img.offsetHeight;
+    }
+  });
+
+  const imageHeightRatio = mainContentHeight > 0 ? totalImageHeight / mainContentHeight : 0;
+
+  console.log(`📊 图片检测统计:`);
+  console.log(`  - 图片数量: ${imageCount}`);
+  console.log(`  - 文本长度: ${textLength}`);
+  console.log(`  - 图片高度占比: ${(imageHeightRatio * 100).toFixed(1)}%`);
+  console.log(`  - 微信文章: ${isWeChatArticle}`);
+
+  // 判断条件:
+  // 1. 图片超过10张且文本少于500字
+  // 2. 微信公众号文章且图片超过5张
+  // 3. 图片高度占比超过60%
+  const condition1 = imageCount > 10 && textLength < 500;
+  const condition2 = isWeChatArticle && imageCount > 5;
+  const condition3 = imageHeightRatio > 0.6;
+
+  return condition1 || condition2 || condition3;
 }
 
 // 智能识别主要内容区域

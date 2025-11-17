@@ -1,9 +1,9 @@
-// Background Service Worker - 纯文本提交版本
+// Background Service Worker - PDF上传版本
 
 // 监听来自popup的消息
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'openGemini') {
-    handleOpenGemini(request.data)
+    handleOpenGeminiWithPDF(request.data)
       .then(result => sendResponse(result))
       .catch(error => sendResponse({ success: false, error: error.message }));
     return true;
@@ -11,7 +11,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 // 处理打开Gemini并提交内容
-async function handleOpenGemini(pageContent) {
+async function handleOpenGeminiWithPDF(pageContent) {
   try {
     console.log('🚀 开始内容提交流程...');
 
@@ -81,6 +81,91 @@ async function handleOpenGemini(pageContent) {
   }
 }
 
+// 生成PDF（使用 Chrome DevTools Protocol）
+async function generatePDF(tabId, pageContent) {
+  try {
+    console.log('  📄 使用 Chrome DevTools Protocol 生成 PDF...');
+
+    // 检查是否有其他调试器在使用
+    try {
+      const targets = await chrome.debugger.getTargets();
+      const currentTarget = targets.find(t => t.tabId === tabId);
+      if (currentTarget && currentTarget.attached) {
+        throw new Error('此标签页已被调试器占用，请关闭 DevTools 后重试');
+      }
+    } catch (e) {
+      console.warn('  ⚠️ 无法检查调试器状态:', e.message);
+    }
+
+    // 附加调试器
+    try {
+      await chrome.debugger.attach({ tabId }, '1.3');
+      console.log('  ✅ 调试器已附加');
+    } catch (attachError) {
+      console.error('  ❌ 附加调试器失败:', attachError);
+      console.error('  错误详情:', {
+        message: attachError.message,
+        stack: attachError.stack
+      });
+      throw attachError;
+    }
+
+    try {
+      // 使用 Page.printToPDF 命令
+      const result = await chrome.debugger.sendCommand(
+        { tabId },
+        'Page.printToPDF',
+        {
+          printBackground: true,
+          landscape: false,
+          displayHeaderFooter: false,
+          preferCSSPageSize: false,
+          marginTop: 0.4,
+          marginBottom: 0.4,
+          marginLeft: 0.4,
+          marginRight: 0.4
+        }
+      );
+
+      // 分离调试器
+      await chrome.debugger.detach({ tabId });
+      console.log('  ✅ 调试器已分离');
+
+      // 转换为 DataURL
+      const dataUrl = `data:application/pdf;base64,${result.data}`;
+      console.log('  ✅ PDF 生成成功');
+
+      return dataUrl;
+    } catch (error) {
+      // 确保分离调试器
+      try {
+        await chrome.debugger.detach({ tabId });
+      } catch (e) {
+        // 忽略
+      }
+      throw error;
+    }
+  } catch (error) {
+    console.error('  ❌ PDF 生成失败:', error);
+
+    // 提供更友好的错误信息
+    let errorMessage = error.message;
+
+    // 更详细的错误匹配
+    if (errorMessage.includes('Cannot access') ||
+        errorMessage.includes('Cannot attach') ||
+        errorMessage.includes('No target')) {
+      errorMessage = '❌ 调试器无法附加到此页面\n\n可能的原因：\n1. 这是受保护的页面（Chrome商店、内部页面等）\n2. 页面正在被其他工具调试（请关闭 DevTools）\n3. 这是扩展程序页面或PDF预览页面\n\n💡 解决方法：请在普通网页上使用此功能';
+    } else if (errorMessage.includes('debugger')) {
+      errorMessage = '❌ 调试器连接失败\n\n请尝试：\n1. 刷新页面后重试\n2. 关闭浏览器的 DevTools 开发者工具\n3. 检查是否有其他扩展占用了调试器';
+    } else if (errorMessage.includes('已被调试器占用')) {
+      // 保持原样
+    }
+
+    throw new Error(errorMessage);
+  }
+}
+
 // 打开Gemini窗口
 async function openGeminiWindow(currentTab, settings) {
   // 获取当前窗口信息
@@ -132,57 +217,38 @@ function waitForTabLoad(tabId) {
   });
 }
 
-// 提交内容到Gemini
-async function submitContentToGemini(tabId, pageContent) {
+// 上传PDF到Gemini
+async function uploadPDFToGemini(tabId, pdfDataUrl, pageContent) {
   try {
-    console.log('  📤 准备提交内容...');
+    console.log('  📤 准备上传PDF...');
 
-    // 构建提示词（包含完整正文）
-    const prompt = await buildPromptWithContent(pageContent);
+    // 构建提示词
+    const prompt = await buildPromptForPDF(pageContent);
 
-    // 注入提交脚本
+    // 注入上传脚本
     await chrome.scripting.executeScript({
       target: { tabId: tabId },
-      func: fillAndSubmit,
-      args: [prompt]
+      func: uploadPDFAndSubmit,
+      args: [pdfDataUrl, prompt, pageContent.title]
     });
 
-    console.log('  ✅ 提交脚本已注入');
+    console.log('  ✅ 上传脚本已注入');
   } catch (error) {
-    console.error('  ❌ 提交内容失败:', error);
-    throw new Error('提交失败: ' + error.message);
+    console.error('  ❌ 上传PDF失败:', error);
+    throw new Error('上传失败: ' + error.message);
   }
 }
 
-// 构建包含完整内容的提示词
-async function buildPromptWithContent(pageContent) {
-  const { title, url, content } = pageContent;
+// 构建PDF的提示词
+async function buildPromptForPDF(pageContent) {
+  const { title, url } = pageContent;
 
-  //  组装正文内容
-  let fullText = '';
-  if (content && Array.isArray(content)) {
-    for (const item of content) {
-      if (item.type === 'heading' && item.content) {
-        fullText += `\n${'#'.repeat(item.level)} ${item.content}\n\n`;
-      } else if (item.type === 'text' && item.content) {
-        fullText += `${item.content}\n\n`;
-      }
-    }
-  }
-
-  // 如果内容为空，使用占位符
-  if (!fullText.trim()) {
-    fullText = '（网页内容提取失败或为空）';
-  }
-
-  let prompt = `📄 网页内容分析请求\n\n`;
+  let prompt = `📄 完整网页PDF分析请求\n\n`;
   prompt += `**标题**: ${title}\n`;
   prompt += `**网址**: ${url}\n`;
   prompt += `**提取时间**: ${new Date().toLocaleString('zh-CN')}\n\n`;
   prompt += `═══════════════════════════════════════\n\n`;
-  prompt += `## 📝 网页完整正文\n\n`;
-  prompt += fullText;
-  prompt += `\n\n═══════════════════════════════════════\n\n`;
+  prompt += `📎 **说明**: 已将完整网页转换为PDF文档上传，请直接阅读PDF文件中的完整内容进行分析。\n\n`;
 
   // 获取当前活动的配置
   try {
@@ -217,17 +283,19 @@ function getDefaultPrompt() {
   return `## 📊 深度分析要求\n\n请使用 **Gemini 2.5 Pro** 模型，基于《如何阅读一本书》的阅读技巧，对上述完整网页内容进行多维度深度分析：\n\n### 1️⃣ 整体理解\n(1) 整体来说，这个网页到底在谈些什么？\n- 你一定要想办法找出这个网页的主题，作者如何依次发展这个主题。\n\n### 2️⃣ 细节分析\n(2) 作者细部说了什么，怎么说的？\n- 找出主要的想法、声明与论点。\n\n### 3️⃣ 合理性评估\n(3) 这个网页说得有道理吗？\n- 评估内容的准确性和逻辑性。\n\n### 4️⃣ 实用价值\n(4) 这个网页跟你有什么关系？\n- 分析其实用价值和对读者的启示。\n\n═══════════════════════════════════════\n\n📝 **请用中文进行全面、深入、结构化的分析。**`;
 }
 
-// 填充并提交（注入到Gemini页面执行）
-function fillAndSubmit(promptText) {
-  console.log('🚀 开始填充内容并自动提交...');
+// 上传PDF并提交（注入到Gemini页面执行）
+function uploadPDFAndSubmit(pdfDataUrl, promptText, pageTitle) {
+  console.log('🚀 开始上传PDF并自动提交...');
   console.log('📝 提示词长度:', promptText ? promptText.length : 0);
+  console.log('📄 页面标题:', pageTitle);
+  console.log('📄 PDF DataURL大小:', (pdfDataUrl.length / 1024 / 1024).toFixed(2), 'MB');
 
   try {
     // 步骤1: 切换到2.5Pro模型
     console.log('🔄 步骤1: 检查并切换到2.5Pro模型...');
     switchTo25Pro();
 
-    // 步骤2: 填充提示词并提交
+    // 步骤2: 填充提示词并上传PDF
     setTimeout(() => {
       console.log('📝 步骤2: 填充提示词到输入框...');
       const inputBox = findInputBox();
@@ -241,10 +309,10 @@ function fillAndSubmit(promptText) {
       inputBox.focus();
       console.log('✅ 提示词已填充');
 
-      // 步骤3: 点击提交按钮
+      // 步骤3: 拖拽上传PDF
       setTimeout(() => {
-        console.log('🚀 步骤3: 查找并点击提交按钮...');
-        findAndClickSubmitButton(inputBox);
+        console.log('📤 步骤3: 拖拽上传PDF...');
+        uploadPDFByDrop(pdfDataUrl, pageTitle, inputBox);
       }, 1000);
     }, 2000); // 等待模型切换完成
 
@@ -255,51 +323,37 @@ function fillAndSubmit(promptText) {
   // 辅助函数：切换到2.5Pro
   function switchTo25Pro() {
     try {
-      // 查找所有按钮和可能的模型选择器元素
-      const allElements = Array.from(document.querySelectorAll('button, div[role="button"], [role="listitem"]'));
+      // 查找所有按钮，寻找模型选择器
+      const allButtons = Array.from(document.querySelectorAll('button'));
 
-      console.log(`🔍 查找模型选择器，共 ${allElements.length} 个元素`);
+      console.log(`🔍 查找模型选择器，共 ${allButtons.length} 个按钮`);
 
-      // 首先检查是否已经是2.5 Pro
-      for (const elem of allElements) {
-        const text = elem.textContent || '';
+      for (const btn of allButtons) {
+        const text = btn.textContent || '';
 
-        // 检查是否包含 "推理、数学和编码" 和 "2.5 Pro"
-        if (text.includes('推理、数学和编码') && text.includes('2.5') && text.includes('Pro')) {
-          console.log('✅ 当前已经是2.5 Pro模型，无需切换');
-          console.log('   元素文本:', text.substring(0, 100));
-          return;
-        }
-      }
+        // 如果当前是Flash，需要切换
+        if (text.includes('Flash') || text.includes('flash')) {
+          console.log('🔍 发现Flash模型按钮，点击打开菜单...');
+          console.log('   按钮文本:', text);
+          btn.click();
 
-      // 如果不是2.5 Pro，需要切换
-      console.log('⚠️ 当前不是2.5 Pro，尝试切换...');
-
-      // 查找Flash按钮并点击打开菜单
-      for (const elem of allElements) {
-        const text = elem.textContent || '';
-
-        if (text.includes('Flash') || text.includes('flash') || text.includes('2.0') || text.includes('1.5')) {
-          console.log('🔍 发现非Pro模型按钮，点击打开菜单...');
-          console.log('   按钮文本:', text.substring(0, 100));
-          elem.click();
-
-          // 等待菜单出现，然后选择2.5 Pro
+          // 等待菜单出现，然后选择Pro
           setTimeout(() => {
+            // 查找Pro选项（增加更多选择器）
             const menuItems = document.querySelectorAll(
-              'div[role="listitem"], button, [role="menuitem"], [role="option"], div[role="button"]'
+              'button, [role="menuitem"], [role="option"], div[role="button"], [role="listitem"], li'
             );
-            console.log(`🔍 查找2.5 Pro选项，共 ${menuItems.length} 个候选项`);
+            console.log(`🔍 查找Pro选项，共 ${menuItems.length} 个候选项`);
 
             for (const option of menuItems) {
               const optionText = option.textContent || '';
 
-              // 查找包含 "推理、数学和编码" 和 "2.5 Pro" 的选项
-              if (optionText.includes('推理、数学和编码') && optionText.includes('2.5') && optionText.includes('Pro')) {
-                console.log('✅ 找到2.5 Pro选项，点击选择');
-                console.log('   选项文本:', optionText.substring(0, 100));
+              // 检查是否包含 "Pro" 和版本号
+              if ((optionText.includes('Pro') || optionText.includes('pro')) &&
+                  (optionText.includes('2.5') || optionText.includes('2.0') || optionText.includes('Gemini'))) {
+                console.log('✅ 找到Pro选项，点击选择');
+                console.log('   选项文本:', optionText);
                 console.log('   元素类型:', option.tagName);
-                console.log('   role属性:', option.getAttribute('role'));
 
                 // 点击元素
                 option.click();
@@ -318,21 +372,27 @@ function fillAndSubmit(promptText) {
                 return;
               }
             }
-
-            console.warn('⚠️ 未找到2.5 Pro选项，打印所有候选项:');
+            console.warn('⚠️ 未找到Pro选项，打印所有候选项:');
             menuItems.forEach((item, index) => {
-              if (index < 20) { // 打印前20个
-                const text = item.textContent?.substring(0, 80) || '';
-                console.log(`   [${index}] ${text}`);
+              if (index < 10) { // 只打印前10个
+                console.log(`   [${index}] ${item.textContent?.substring(0, 50)}`);
               }
             });
-          }, 1500); // 等待1.5秒
+          }, 1000); // 增加到1秒等待时间
 
+          return;
+        }
+
+        // 如果已经是Pro，不需要切换
+        if ((text.includes('Pro') || text.includes('pro')) &&
+            (text.includes('2.5') || text.includes('2.0'))) {
+          console.log('✅ 当前已经是Pro模型，无需切换');
+          console.log('   按钮文本:', text);
           return;
         }
       }
 
-      console.log('⚠️ 未找到模型选择器，假设已经是2.5 Pro模型');
+      console.log('⚠️ 未找到模型选择器，假设已经是Pro模型');
     } catch (error) {
       console.error('❌ 切换模型失败:', error);
     }
@@ -356,6 +416,107 @@ function fillAndSubmit(promptText) {
 
     console.error('❌ 未找到输入框');
     return null;
+  }
+
+  // 辅助函数：通过拖拽上传PDF
+  function uploadPDFByDrop(dataUrl, fileName, inputBox) {
+    try {
+      console.log('🎯 开始拖拽上传PDF...');
+
+      // 将DataURL转换为Blob
+      const arr = dataUrl.split(',');
+      const mime = arr[0].match(/:(.*?);/)[1];
+      const bstr = atob(arr[1]);
+      let n = bstr.length;
+      const u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      const blob = new Blob([u8arr], { type: mime });
+
+      console.log('✅ PDF转换为Blob完成, 大小:', (blob.size / 1024 / 1024).toFixed(2), 'MB');
+
+      // 创建File对象
+      const file = new File([blob], (fileName || 'webpage') + '.pdf', { type: 'application/pdf' });
+
+      // 创建DataTransfer并添加文件
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+
+      // 触发拖拽事件
+      const dragenterEvent = new DragEvent('dragenter', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer: dataTransfer
+      });
+
+      const dragoverEvent = new DragEvent('dragover', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer: dataTransfer
+      });
+
+      const dropEvent = new DragEvent('drop', {
+        bubbles: true,
+        cancelable: true,
+        dataTransfer: dataTransfer
+      });
+
+      inputBox.dispatchEvent(dragenterEvent);
+      inputBox.dispatchEvent(dragoverEvent);
+      inputBox.dispatchEvent(dropEvent);
+
+      console.log('✅ 拖拽事件已触发');
+
+      // 步骤4: 等待文件上传完成（观察DOM变化）
+      console.log('⏳ 步骤4: 等待文件上传完成...');
+      waitForFileUpload(inputBox);
+
+    } catch (error) {
+      console.error('❌ 拖拽上传失败:', error);
+    }
+  }
+
+  // 辅助函数：等待文件上传完成
+  function waitForFileUpload(inputBox) {
+    let checkCount = 0;
+    const maxChecks = 30; // 最多等待15秒
+
+    const checkUpload = () => {
+      checkCount++;
+
+      // 查找上传完成的标志
+      // Gemini会在上传后显示文件预览
+      const filePreview = document.querySelector('[data-test-id*="attachment"]') ||
+                         document.querySelector('.upload-preview') ||
+                         document.querySelector('[class*="attachment"]') ||
+                         document.querySelector('[aria-label*="附件"]') ||
+                         document.querySelector('[aria-label*="attachment"]');
+
+      if (filePreview) {
+        console.log(`✅ 检测到文件上传完成（检查${checkCount}次）`);
+
+        // 步骤5: 查找并点击提交按钮
+        setTimeout(() => {
+          console.log('🚀 步骤5: 查找并点击提交按钮...');
+          findAndClickSubmitButton(inputBox);
+        }, 1000);
+
+        return;
+      }
+
+      if (checkCount >= maxChecks) {
+        console.warn(`⚠️ 等待上传超时（${checkCount}次检查），尝试点击提交`);
+        findAndClickSubmitButton(inputBox);
+        return;
+      }
+
+      // 继续检查
+      setTimeout(checkUpload, 500);
+    };
+
+    // 开始检查
+    setTimeout(checkUpload, 2000); // 先等2秒再开始检查
   }
 
   // 辅助函数：查找并点击提交按钮
@@ -437,7 +598,7 @@ chrome.commands.onCommand.addListener(async (command) => {
         });
 
         if (results && results[0] && results[0].result) {
-          await handleOpenGemini(results[0].result);
+          await handleOpenGeminiWithPDF(results[0].result);
         }
       } catch (error) {
         console.error('快捷键执行失败:', error);
