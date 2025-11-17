@@ -7,7 +7,7 @@ set -e
 echo "开始创建发布包..."
 
 # 输出文件名
-OUTPUT_FILE="gemini-summarizer-v1.1.0.zip"
+OUTPUT_FILE="gemini-summarizer-v1.3.0.zip"
 
 # 如果输出文件已存在，删除它
 if [ -f "$OUTPUT_FILE" ]; then

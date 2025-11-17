@@ -240,7 +240,7 @@ MIT License
 
 ## 📮 联系方式
 
-如有问题或建议，请通过GitHub Issues联系。
+如有问题或建议，请通过Chrome Web Store扩展页面的反馈功能联系。
 
 ---
 

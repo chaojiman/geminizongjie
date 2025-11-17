@@ -10,7 +10,8 @@
       "mcp__rube__RUBE_MULTI_EXECUTE_TOOL",
       "Bash($PROFILE)",
       "Bash(Test-Path:*)",
-      "Bash(pwsh -Command \"$PROFILE\")"
+      "Bash(pwsh -Command \"$PROFILE\")",
+      "Bash(cat:*)"
     ],
     "deny": [],
     "ask": []

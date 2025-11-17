@@ -1,124 +1,112 @@
-# Chrome Web Store 发布检查清单
+# Chrome 扩展发布清单
 
-## ✅ 代码准备
+## 文档清理完成
 
-- [x] 删除重复函数（popup.js）
-- [x] 清理所有 console.log 调试代码
-- [x] 修复 CSS 样式问题
-- [x] 验证功能正常
-- [x] 无语法错误
+### 已删除文件统计
+- 3 个备份文件（*.backup, *.bak）
+- 9 个空文档
+- 7 个 PDF 相关文件（v1.3.0 已废弃）
+- 4 个临时报告文档
+- 6 个重复的发布文档
+- 4 个重复的测试文档
+- 12 个版本历史文档
+- 2 个未使用的开发工具
 
-## 📝 文案准备
+**总计删除：47 个文件**
 
-- [x] 简短描述（132字符以内）
-  - 文件：`STORE_SHORT_DESC.txt`
-- [x] 详细描述（500-1000字）
-  - 文件：`STORE_DESCRIPTION.md`
-- [ ] 优化 manifest.json 中的 description
+### 保留的核心文档（8个）
+1. README.md - 项目主文档
+2. CHANGELOG.md - 版本变更历史
+3. PUBLISH.md - 发布指南
+4. TEST.md - 测试指南
+5. PRIVACY.md - 隐私政策
+6. STORE_DESCRIPTION.md - 商店详细描述
+7. QUICKSTART.md - 快速入门
+8. INSTALL.md - 安装指南
 
-## 🎨 素材准备
+## Chrome Web Store 发布检查清单
 
-### 必需素材
-- [ ] **小型宣传图** (440x280)
-  - 位置：`store-assets/promo-small.png`
-- [ ] **功能截图1** (1280x800) - 主界面
-  - 位置：`store-assets/screenshot1.png`
-- [ ] **功能截图2** (1280x800) - 内容提取
-  - 位置：`store-assets/screenshot2.png`
-- [ ] **功能截图3** (1280x800) - Gemini效果
-  - 位置：`store-assets/screenshot3.png`
-- [ ] **功能截图4** (1280x800) - 配置管理（可选）
-  - 位置：`store-assets/screenshot4.png`
-- [ ] **功能截图5** (1280x800) - 使用场景（可选）
-  - 位置：`store-assets/screenshot5.png`
+### 1. 核心文件验证
+- manifest.json (v3, 版本 1.3.0)
+- background.js (16KB)
+- popup.html/js/css
+- config.html/js/css
+- content-extractor.js (9.6KB)
+- offscreen.html/js
+- 图标文件：
+  - icon16.png (655B)
+  - icon32.png (1.9KB)
+  - icon48.png (3.3KB)
+  - icon128.png (18KB)
 
-### 可选素材
-- [ ] 大型宣传图 (920x680 或 1400x560)
-- [ ] 宣传视频（YouTube链接，60秒内）
+### 2. 发布包准备
+- ZIP 文件：gemini-summarizer-v1.3.0.zip (48KB)
+- 包含所有必需文件
+- 文件大小符合要求（< 100MB）
 
-## 🔒 隐私政策
+### 3. 商店提交材料
 
-- [x] 隐私政策文档已准备（PRIVACY.md）
-- [ ] **隐私政策托管到可公开访问的URL**
-  - 建议：GitHub Pages 或项目网站
-  - URL格式：`https://yourusername.github.io/gemini-summarizer/privacy.html`
+#### 必需材料
+- [ ] 商店描述（从 STORE_DESCRIPTION.md 复制）
+- [ ] 简短描述（需创建 STORE_SHORT_DESC.txt）
+- [ ] 隐私政策 URL（需托管 privacy.html）
+  - 选项1: GitHub Pages
+  - 选项2: Vercel
+  - 选项3: 其他静态托管服务
 
-## 📦 打包准备
+#### 宣传素材
+- [ ] 小型宣传图 (440x280px) - 至少1张
+- [ ] 截图 (1280x800px 或 640x400px) - 至少1张，建议3-5张
+  - 截图1: 弹出窗口界面
+  - 截图2: 配置页面
+  - 截图3: 使用示例
+- [ ] 大型宣传图 (920x680px) - 可选
+- [ ] 宣传视频 - 可选
 
-- [ ] 创建发布ZIP包
-  - 排除文件：`.git/`, `node_modules/`, `*.md`（除README.md）, `.DS_Store`
-  - 包含文件：所有必需的扩展文件、图标、manifest.json
-- [ ] 验证ZIP包完整性
-- [ ] 测试从ZIP包加载扩展
+### 4. 商店信息
+- [ ] 类别：生产力工具 / AI工具
+- [ ] 语言：中文（简体）
+- [ ] 定价：免费
+- [ ] 目标地区：全球
 
-## 🏪 商店信息
+## GitHub Release 发布检查清单
 
-### 基本信息
-- [ ] 插件名称：`Gemini页面总结助手`
-- [ ] 版本号：`1.1.0`
-- [ ] 类别：生产力工具 (Productivity)
-- [ ] 语言：中文（简体）、English（建议添加）
+### 1. Git 提交
+```bash
+git add .
+git commit -m "chore: 清理重复文档，准备 v1.3.0 发布"
+git push origin main
+```
 
-### 权限说明
-- [ ] 准备权限使用说明：
-  - `activeTab`: 读取当前标签页内容以提取文字和图片
-  - `storage`: 保存用户设置（如打开方式偏好）
-  - `scripting`: 注入内容提取脚本到页面
-  - `tabs`: 创建和管理Gemini标签页
-  - `offscreen`: 用于剪贴板操作
+### 2. 创建 Release
+- [ ] 创建 tag: v1.3.0
+- [ ] Release 标题: Gemini页面总结助手 v1.3.0
+- [ ] 从 CHANGELOG.md 复制版本说明
+- [ ] 附加文件: gemini-summarizer-v1.3.0.zip
+- [ ] 发布 Release
 
-### 隐私实践
-- [ ] 数据使用披露：
-  - 不收集数据
-  - 不出售用户数据
-  - 不用于非核心功能
+## 下一步行动
 
-## 📋 上传前检查
+### 立即行动
+1. 运行本地测试（加载未打包的扩展）
+2. 验证所有核心功能
+3. 创建 STORE_SHORT_DESC.txt
+4. 准备宣传素材（截图、宣传图）
 
-- [ ] 所有功能正常工作
-- [ ] 在不同网站测试过
-- [ ] 错误处理完善
-- [ ] 权限说明清晰
-- [ ] 图标清晰专业
-- [ ] 截图展示到位
-- [ ] 描述准确完整
-- [ ] 隐私政策合规
-- [ ] 代码无混淆
-- [ ] 无远程加载脚本
+### 发布前准备
+5. 托管隐私政策页面
+6. 创建 GitHub Release
+7. 提交到 Chrome Web Store
 
-## 🚀 发布步骤
+### 发布后
+8. 监控审核状态
+9. 回复审核意见（如有）
+10. 发布后推广
 
-1. **注册开发者账号**
-   - 访问 [Chrome Web Store 开发者控制台](https://chrome.google.com/webstore/devconsole/)
-   - 支付 $5 一次性注册费
-   - 完善开发者资料
+## Chrome Web Store 提交链接
 
-2. **上传扩展**
-   - 点击「新增项」
-   - 上传ZIP文件
-   - 填写商店信息
+- 开发者控制台: https://chrome.google.com/webstore/devconsole
+- 发布指南: https://developer.chrome.com/docs/webstore/publish/
+- 政策文档: https://developer.chrome.com/docs/webstore/program-policies/
 
-3. **填写商店信息**
-   - 产品详情：名称、摘要、详细说明
-   - 图形资源：图标、截图、宣传图
-   - 类别：选择「生产力」或「实用工具」
-   - 语言：选择支持的语言
-   - 隐私权政策：填写托管URL
-
-4. **提交审核**
-   - 检查所有信息
-   - 提交审核
-   - 等待审核结果（1-3个工作日）
-
-## 📊 审核后
-
-- [ ] 监控用户评论
-- [ ] 及时回复反馈
-- [ ] 收集用户建议
-- [ ] 准备后续更新
-
----
-
-**最后更新**: 2024年11月
-**版本**: 1.1.0
-
+项目已准备就绪，可以发布到 Chrome Web Store！
